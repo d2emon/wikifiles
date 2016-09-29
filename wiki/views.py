@@ -37,6 +37,10 @@ class PageView(TemplateView):
         w = WikiPage(root=self.path)
         w.load(path=subpath)
 
+        logging.debug("Root: %s", w.root)
+        logging.debug("Path: %s", w.path)
+        logging.debug("Subpath: %s", w.subpath)
+
         context = super(PageView, self).get_context_data(**kwargs)
         context['crumbs'] = crumbs
         context['wiki'] = w

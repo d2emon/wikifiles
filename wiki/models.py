@@ -1,6 +1,5 @@
 # from django.db import models
 import os
-import logging
 import configparser
 import re
 
@@ -8,13 +7,12 @@ import re
 class WikiLink():
     def __init__(self, title="", root=""):
         self.title = title
-        # if root:
-        #    root = os.path.normpath(root)
         self.path = os.path.join(root, self.title)
-        # "{}{}".format(root, self.title)
 
 
 class WikiPage():
+    wiki_title = "Wiki"
+
     def __init__(self, root=""):
         self.root = root
         self.subpath = ""
@@ -25,6 +23,7 @@ class WikiPage():
         self.html = ""
 
         self.children = []
+        import logging
         logging.debug("Root:%s", self.root)
 
     def load(self, root=None, path=None):
@@ -32,6 +31,7 @@ class WikiPage():
             self.root = root
         if path:
             self.subpath = path
+        import logging
         logging.debug("Load:%s", self.root)
 
         # self.loadsub()
@@ -39,6 +39,7 @@ class WikiPage():
         # self.loadtxt()
         self.children = self.get_children_array()
         self.opt.read(self.get_filepath("__page.opt"))
+        import logging
         for section in self.opt.sections():
             logging.debug("Section: %s", section)
             items = self.opt[section]
@@ -66,9 +67,12 @@ class WikiPage():
         return os.path.join(os.path.normpath(self.subpath), '..')
 
     def get_title(self):
-        return os.path.basename(os.path.normpath(self.root))
+        if not self.subpath:
+            return self.wiki_title
+        return os.path.basename(os.path.normpath(self.subpath))
 
     def get_children(self):
+        import logging
         logging.debug("Root:%s", self.get_filepath())
         try:
             items = next(os.walk(self.get_filepath()))[1]
@@ -83,7 +87,7 @@ class WikiPage():
         return [WikiLink(c, self.subpath) for c in self.get_children()]
 
     def get_html(self, href=None, attach=None):
-        href = r"/wiki/{}\1/__page.wiki".format(self.subpath)
+        href = r"/wiki/{}\1/__content.html".format(self.subpath)
         attach = r"/static/wiki/{}__attach/".format(self.subpath)
 
         found = re.search(r'<body>(.*)</body>', self.html, re.DOTALL)
@@ -92,7 +96,7 @@ class WikiPage():
 
         text = found.group(1)
         if href:
-            text = re.sub(r'href="(.*?)"', r'href="{}"'.format(href), text)
+            text = re.sub(r'href="^(http[s?]\:)(.*?)"', r'href="{}"'.format(href), text)
         if attach:
             text = re.sub(r'="__attach/(.*?)"', r'="{}\1"'.format(attach), text)
         return text
