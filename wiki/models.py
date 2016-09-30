@@ -1,4 +1,3 @@
-# from django.db import models
 import os
 import configparser
 import re
@@ -12,6 +11,7 @@ class WikiLink():
 
 class WikiPage():
     wiki_title = "Wiki"
+    root_url = ""
 
     def __init__(self, root=""):
         self.root = root
@@ -23,16 +23,12 @@ class WikiPage():
         self.html = ""
 
         self.children = []
-        import logging
-        logging.debug("Root:%s", self.root)
 
     def load(self, root=None, path=None):
         if root:
             self.root = root
         if path:
             self.subpath = path
-        import logging
-        logging.debug("Load:%s", self.root)
 
         # self.loadsub()
         # self.loadopt()
@@ -44,12 +40,10 @@ class WikiPage():
             logging.debug("Section: %s", section)
             items = self.opt[section]
             for i in items:
-                logging.debug("%s=%s", i, self.opt[section][i])
+                logging.debug("%s: %s=%s", section, i, self.opt[section][i])
 
         self.text = self.load_file("__page.text")
         self.html = self.load_file("__content.html")
-
-        # self.content = load_wiki(path, attach="{}{}__attach/".format(self.attach, subpath))
 
     def load_file(self, filename):
         try:
@@ -87,8 +81,11 @@ class WikiPage():
         return [WikiLink(c, self.subpath) for c in self.get_children()]
 
     def get_html(self, href=None, attach=None):
-        href = r"/wiki/{}\1/__content.html".format(self.subpath)
+        href = r"{}{}\1/__content.html".format(self.root_url, self.subpath)
         attach = r"/static/wiki/{}__attach/".format(self.subpath)
+
+        if not self.html:
+            return ''
 
         found = re.search(r'<body>(.*)</body>', self.html, re.DOTALL)
         if not found:
@@ -96,7 +93,7 @@ class WikiPage():
 
         text = found.group(1)
         if href:
-            text = re.sub(r'href="^(http[s?]\:)(.*?)"', r'href="{}"'.format(href), text)
+            text = re.sub(r'href="(?!https?:)(?!__attach)(.*?)"', r'href="{}"'.format(href), text)
         if attach:
             text = re.sub(r'="__attach/(.*?)"', r'="{}\1"'.format(attach), text)
         return text

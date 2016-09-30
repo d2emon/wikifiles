@@ -10,6 +10,6 @@ urlpatterns = [
     url(r'^(?P<path>.*)/__page.wiki$', PageView.as_view(), name='wiki'),
     url(r'^(?P<path>.*)/__content.html$', HtmlView.as_view(), name='html'),
     # url(r'^(?P<path>.*)/__attach/(?P<file>.*)$', AttachView.as_view(), name='attach'),
-    url(r'^(?P<path>.*)/$', RedirectView.as_view(pattern_name='html')),
+    url(r'^(?P<path>.*)/$', RedirectView.as_view(pattern_name='html'), name='path'),
     url(r'^__content.html$', RedirectView.as_view(pattern_name='wikiroot')),
 ]

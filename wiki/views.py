@@ -1,3 +1,4 @@
+from django.urls import reverse
 from django.views.generic import TemplateView, RedirectView
 from wiki.models import WikiPage, WikiLink
 import os
@@ -17,9 +18,6 @@ class PageView(TemplateView):
         return items
 
     def get_context_data(self, **kwargs):
-        import logging
-        logging.debug(kwargs)
-
         subpath = kwargs.get('path', '')
         if subpath:
             subpath = os.path.normpath(subpath) + '/'
@@ -28,18 +26,16 @@ class PageView(TemplateView):
         p = os.path.normpath(subpath)
         crumbs = []
         while p:
-            old = p
             p, crumb = os.path.split(os.path.normpath(p))
             crumbs.append(WikiLink(crumb, p))
+            if p == '/':
+                break
         crumbs.reverse()
         crumbs.pop()
 
         w = WikiPage(root=self.path)
+        w.root_url = reverse('wikiroot')
         w.load(path=subpath)
-
-        logging.debug("Root: %s", w.root)
-        logging.debug("Path: %s", w.path)
-        logging.debug("Subpath: %s", w.subpath)
 
         context = super(PageView, self).get_context_data(**kwargs)
         context['crumbs'] = crumbs
